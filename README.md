@@ -31,6 +31,10 @@ Contributors names and contact info
 ex. Gerd Grimmen (F.KU)
 
 ## Version History
+* 0.1.1
+    * fixed old variable names
+    * fixed saved filenames
+    * "fixed" content type - might need extra rules for each
 * 0.1
     * Nothing here to see
     * creating a uuid/creating a guid

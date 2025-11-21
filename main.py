@@ -1,9 +1,5 @@
-# import uuid
+import uuid
 
-# myuuid = uuid.uuid4()
-# myuuidStr = str(myuuid)
-
-# print('Your UUID is: ' + str(myuuid))
 import json
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -95,12 +91,13 @@ def get_image(args):
 
 @api.put("/files")
 def post_file(body):
-    next_id = len(api_data["files"].keys())
-    uploaded_file_name = "uploaded_file_" + str(next_id) + ".png"
+    # next_id = len(api_data["files"].keys())
+    next_id = str(uuid.uuid4())
+    uploaded_file_name = str(next_id) + ".png"
     with open(uploaded_file_name, "wb") as uploaded_file:
         newFileByteArray = bytearray(body)
         uploaded_file.write(newFileByteArray)
-    api_data["files"][str(next_id)] = uploaded_image_name
+    api_data["files"][str(next_id)] = uploaded_file_name
     write_data()
     return {"id": str(next_id)}
 
@@ -163,7 +160,7 @@ if __name__ == "__main__":
         def do_PUT(self):
             parsed_url = urlparse(self.path)
             path = parsed_url.path
-            if self.headers.get("content-type") != "image/png":
+            if self.headers.get("content-type") != "application/octet-stream":
                 self.send_response(400)
                 self.end_headers()
                 self.wfile.write(json.dumps({
