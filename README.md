@@ -31,6 +31,8 @@ Contributors names and contact info
 ex. Gerd Grimmen (F.KU)
 
 ## Version History
+* 0.1.2
+    * minor fixes
 * 0.1.1
     * fixed old variable names
     * fixed saved filenames

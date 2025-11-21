@@ -66,8 +66,8 @@ def index(_):
     return { 
         "name": "Rest API for simple note taking",
         "summary": "",
-        "endpoints": [ "/fiels" "/help" ],
-        "version": "0.1.0"
+        "endpoints": [ "/files" "/help" ],
+        "version": "0.1.2"
     }
 
 @api.get("/help")
