@@ -25,7 +25,6 @@ def load_index():
             return index_file.read()
     return index_content
 
-
 def initial_persistence_setup():
     if os.path.isfile(filename):
         with open(filename, "r") as data_file:
@@ -60,20 +59,18 @@ class API():
 
 api = API()
 
-
 @api.get("/")
 def index(_):
     return { 
         "name": "Rest API for simple note taking",
         "summary": "",
         "endpoints": [ "/files" "/help" ],
-        "version": "0.1.2"
+        "version": "0.2.0"
     }
 
 @api.get("/help")
 def get_help(args):
     return {"help": "help"}
-
 
 @api.get("/files")
 def get_image(args):
@@ -100,6 +97,17 @@ def post_file(body):
     api_data["files"][str(next_id)] = uploaded_file_name
     write_data()
     return {"id": str(next_id)}
+
+@api.delete("/files")
+def delete_file(body):
+    if not "id" in body.keys():
+        return {"message": "invalid am entry"}
+    if int(body["id"]) in api_data["files"].keys():
+        api_data["files"].pop(int(body["id"]))
+        print("deleting")
+        write_data()
+        return {"message": "deleted"}
+    return {"message": "not found"}
 
 if __name__ == "__main__":
     class ApiRequestHandler(BaseHTTPRequestHandler):
