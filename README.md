@@ -8,6 +8,7 @@ S3 Concept - Is this all what it takes to build an S3 service?
 
 * import uuid
 * import json
+* import os
 * from http.server import HTTPServer, BaseHTTPRequestHandler
 * from urllib.parse import urlparse, parse_qs
 
@@ -31,6 +32,8 @@ Contributors names and contact info
 ex. Gerd Grimmen (F.KU)
 
 ## Version History
+* 0.2.0
+    * add delete file endpoint
 * 0.1.2
     * minor fixes
 * 0.1.1
