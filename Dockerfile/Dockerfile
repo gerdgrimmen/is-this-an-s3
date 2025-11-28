@@ -6,7 +6,7 @@ COPY ./main.py main.py
 COPY ./api_data_structure.json api_data.json
 COPY ./index.html index.html
 
-EXPOSE 5000
+EXPOSE 5010
 
 RUN useradd worst
 USER worst
