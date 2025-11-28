@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <style>
+body {background-color: powderblue;}
+#taglist {background-color: cyan; min-width: 50px; min-height: 50px;}
+#notelist {background-color: yellow; min-width: 50px; min-height: 50px;}
+        </style>
+    </head>
+    <body>
+        <!-- ids 
+        newnote_input newnote_button newtag_input newtag_button taglist notelist output newimage_input newimage_button image_preview
+        fullnote_output
+        -->
+        <div>
+            <!-- input new note -->
+            <label for="newnote">New Note:</label><br>
+            <textarea name="newnote" cols="40" rows="5" id="newnote_input"></textarea>
+            <!-- button new note -->
+            <input type="button" value="Add Note" id="newnote_button"/>
+        </div>
+        <div>
+            <!-- input new tag -->
+            <label for="newtag">New Tag:</label><br>
+            <input type="text" name="newtag" size="20" id="newtag_input"/>
+            <!-- button new tag -->
+            <input type="button" value="Add Tag" id="newtag_button"/>
+        </div>
+        <div>
+            <!-- input new image -->
+            <label for="newimage">New Image:</label><br>
+            <input type="file" accept="image/*" name="newimage" id="newimage_input"/>
+            <!-- button new image -->
+            <input type="button" value="Add Tag" id="newimage_button"/>
+        </div>
+
+        <!-- last uploaded image -->
+        <img id="image_preview">
+        <!-- tag list -->
+        <div id="taglist"></div>
+        <!-- note list -->
+        <div id="notelist"></div>
+
+        <!-- fullnote -->
+        <div id="fullnote_output"></div>
+
+
+
+        <script type="text/javascript">
+            console.log("yay")
+            var home_address = "http://localhost"
+            var port = "5000"
+            const worst_headers = new Headers();
+            worst_headers.append("Content-Type", "application/json");
+            const worst_image_headers = new Headers();
+            worst_image_headers.append("Content-Type", "image/png");
+            
+            var address_notes = home_address+":"+port+"/notes"
+            var address_tags = home_address+":"+port+"/tags"
+            var address_images = home_address+":"+port+"/images"
+
+            var newnote_input = document.getElementById("newnote_input");
+            var newnote_button = document.getElementById("newnote_button");
+            var newtag_input = document.getElementById("newtag_input");
+            var newtag_button = document.getElementById("newtag_button");
+            var taglist = document.getElementById("taglist");
+            var notelist = document.getElementById("notelist");
+            
+            var newimage_input = document.getElementById("newimage_input");
+            var newimage_button = document.getElementById("newimage_button");
+            var image_preview = document.getElementById('image_preview');
+            var image_upload_buffer = null;
+
+            function reset_notelist(){
+                notelist.innerText = "";
+            };
+ 
+            function reset_taglist(){
+                taglist.innerText = "";
+            };
+ 
+            function layout_notes_data(data_json){
+                reset_notelist();
+                Object.keys(data_json["notes"]).forEach(function(key) {
+                    console.log(key + ": " + data_json["notes"][key]);
+                });
+                notelist.innerText = JSON.stringify(data_json);
+                // for each note - clickable -> fullnote {"notes".append()}
+            };
+ 
+            function layout_tags_data(data_json){
+                reset_taglist();
+                 Object.keys(data_json["tags"]).forEach(function(key) {
+                    console.log(key + ": " + data_json["tags"][key]);
+                });
+                taglist.innerText = JSON.stringify(data_json);
+                // for each tag - clickable -> fullnote {"tags".append()}
+            };
+ 
+            async function update_notelist(){
+                // get
+                fetch(address_notes)
+                .then(function(response) {
+                    return response.json();
+                }).then(function(data) {
+                    // console.log(data);
+                    layout_notes_data(data);
+                });
+            };
+            async function update_taglist(){
+                // get
+                fetch(address_tags)
+                .then(function(response) {
+                    return response.json();
+                }).then(function(data) {
+                    // console.log(data);
+                    layout_tags_data(data);
+                });
+            };
+ 
+            async function add_note(){
+                // post
+                var post_body = {"text": newnote_input.value};
+                console.log(JSON.stringify(post_body));
+                fetch(address_notes, {method: "POST", headers: worst_headers, body: JSON.stringify(post_body) })
+                .then(function(response) {
+                    return response.json();
+                }).then(function(){
+                    update_notelist();
+                });
+            };
+
+            async function add_tag(){
+                // post
+                var post_body = {"text": newtag_input.value};
+                fetch(address_tags, {method: "POST", headers: worst_headers, body: JSON.stringify(post_body) })
+                .then(function(response) {
+                    return response.json();
+                }).then(function(){
+                    update_taglist();
+                });
+            };
+
+            async function add_image(){
+                // put
+                fetch(address_images, {method: "PUT", headers: worst_image_headers, body: image_upload_buffer})
+                .then(function(response) {
+                    return response.json();
+                }).then(function(){
+                    update_taglist();
+                });
+            };
+
+            async function upload_image(event){
+                image_preview.src = URL.createObjectURL(event.target.files[0]);
+                image_upload_buffer = await fetch(image_preview.src)
+                    .then(r => r.blob())
+                    .then(blobFile => new File([blobFile], "fileNameGoesHere", { type: "image/png" }));
+                image_preview.onload = function() { URL.revokeObjectURL(image_preview.src); };
+            };
+
+            newnote_button.addEventListener("click", add_note);
+            newtag_button.addEventListener("click", add_tag);
+            newimage_button.addEventListener("click", add_image);
+
+            newimage_input.addEventListener("change", upload_image);
+
+            update_notelist();
+            update_taglist();
+        </script>
+    </html>
+</body>
