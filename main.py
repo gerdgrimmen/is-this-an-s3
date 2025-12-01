@@ -113,27 +113,37 @@ if __name__ == "__main__":
     class ApiRequestHandler(BaseHTTPRequestHandler):
         global api
         
-        def call_api(self, method, path, args):
-            if path in api.routing[method]:
-                try:
-                    result = api.routing[method][path](args)
-                    self.send_response(200)
-                    self.end_headers()
-                    if type(result) is dict:
-                        self.wfile.write(json.dumps(result, indent=4).encode())
-                    elif type(result) is str:
-                        self.wfile.write(result.encode())
-                    elif type(result) is bytes:
-                        self.wfile.write(result)
-                    
-                except Exception as e:
-                    self.send_response(500, "Server Error")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({ "error": e.args }, indent=4).encode())
-            else:
-                self.send_response(404, "Not Found")
+    def call_api(self, method, path, args, in_id=None):
+            try:
+                response = api.routing[method][path](args) if in_id == None else api.routing[method][path](args, in_id)
+                self.send_response(200)
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+                if type(result) is dict:
+                    self.wfile.write(json.dumps(result, indent=4).encode())
+                elif type(result) is str:
+                    self.wfile.write(result.encode())
+                elif type(result) is bytes:
+                    self.wfile.write(result)
+                
+            except Exception as e:
+                self.send_response(500, "Server Error")
+                self.end_headers()
+                self.wfile.write(json.dumps({ "error": e.args }, indent=4).encode())
+
+        def return_404(self):
+            self.send_response(404, "Not Found")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+        
+        def return_401(self):
+            self.send_response(401, "Not Authorized")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+        
+        def return_400(self):
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "posted data must be in json format"}, indent=4).encode())
 
         def do_GET(self):
             parsed_url = urlparse(self.path)
