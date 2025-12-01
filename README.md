@@ -32,6 +32,9 @@ Contributors names and contact info
 ex. Gerd Grimmen (F.KU)
 
 ## Version History
+* 0.3.0
+    * Handler Updates, return codes 40x functions
+    * single endpoint with "/< id >", to select single dataset
 * 0.2.0
     * add delete file endpoint
 * 0.1.2

@@ -65,7 +65,7 @@ def index(_):
         "name": "Rest API for simple note taking",
         "summary": "",
         "endpoints": [ "/files" "/help" ],
-        "version": "0.2.0"
+        "version": "0.3.0"
     }
 
 @api.get("/help")
@@ -73,7 +73,21 @@ def get_help(args):
     return {"help": "help"}
 
 @api.get("/files")
-def get_image(args):
+def get_files(args):
+    print(api_data)
+    if "path_id" in args.keys():
+        if args["path_id"] in api_data["files"].keys():
+            file_path = api_data["files"][args["path_id"]]
+            print(file_path)
+            with open(file_path, "rb") as file_file:
+                print(type(file_file))
+                return file_file.read()
+        else:
+            return {"message": "not found"}
+    return {"message": "not found - end"}
+
+@api.get("/files/<id>")
+def get_single_file(args):
     print(api_data)
     if "path_id" in args.keys():
         if args["path_id"] in api_data["files"].keys():
@@ -113,57 +127,66 @@ if __name__ == "__main__":
     class ApiRequestHandler(BaseHTTPRequestHandler):
         global api
         
-        def call_api(self, method, path, args):
-            if path in api.routing[method]:
-                try:
-                    result = api.routing[method][path](args)
-                    self.send_response(200)
-                    self.end_headers()
-                    if type(result) is dict:
-                        self.wfile.write(json.dumps(result, indent=4).encode())
-                    elif type(result) is str:
-                        self.wfile.write(result.encode())
-                    elif type(result) is bytes:
-                        self.wfile.write(result)
-                    
-                except Exception as e:
-                    self.send_response(500, "Server Error")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({ "error": e.args }, indent=4).encode())
-            else:
-                self.send_response(404, "Not Found")
+    def call_api(self, method, path, args, in_id=None):
+            try:
+                response = api.routing[method][path](args) if in_id == None else api.routing[method][path](args, in_id)
+                self.send_response(200)
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+                if type(result) is dict:
+                    self.wfile.write(json.dumps(result, indent=4).encode())
+                elif type(result) is str:
+                    self.wfile.write(result.encode())
+                elif type(result) is bytes:
+                    self.wfile.write(result)
+                
+            except Exception as e:
+                self.send_response(500, "Server Error")
+                self.end_headers()
+                self.wfile.write(json.dumps({ "error": e.args }, indent=4).encode())
+
+        def return_404(self):
+            self.send_response(404, "Not Found")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+        
+        def return_401(self):
+            self.send_response(401, "Not Authorized")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "not found"}, indent=4).encode())
+        
+        def return_400(self):
+            self.send_response(400)
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "posted data must be in json format"}, indent=4).encode())
 
         def do_GET(self):
             parsed_url = urlparse(self.path)
             path = parsed_url.path
             args = parse_qs(parsed_url.query)
-            if not path in api.routing["GET"]:
+            if path in api.routing["GET"]: 
+                self.call_api("GET", path, args)
+                return
+            else:
                 new_path, path_id = path.rsplit("/",1)
-                print(new_path, " ", path_id)
-                if new_path == "": new_path = "/"
-                if new_path in api.routing["GET"]: 
-                    path = new_path
-                    args["path_id"] = path_id
-            for k in args.keys():
-                if len(args[k]) == 1:
-                    args[k] = args[k][0]            
-            self.call_api("GET", path, args)
+                if new_path+"/<id>" in api.routing["GET"]:
+                    args["/<id>"] = path_id
+                    self.call_api("GET", new_path+"/<id>", args, path_id)
+                    return
+            self.return_404()
 
         def do_POST(self):
             parsed_url = urlparse(self.path)
             path = parsed_url.path
             if self.headers.get("content-type") != "application/json":
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "error": "posted data must be in json format"
-                }, indent=4).encode())
+                self.return_400()
+                return
             else:
                 data_len = int(self.headers.get("content-length"))
                 data = self.rfile.read(data_len).decode()
-                self.call_api("POST", path, json.loads(data))
+                if path in api.routing["POST"]:
+                    self.call_api("POST", path, json.loads(data))
+                    return
+            self.return_404()
         
         def do_PUT(self):
             parsed_url = urlparse(self.path)
