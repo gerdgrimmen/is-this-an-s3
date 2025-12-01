@@ -73,7 +73,21 @@ def get_help(args):
     return {"help": "help"}
 
 @api.get("/files")
-def get_image(args):
+def get_files(args):
+    print(api_data)
+    if "path_id" in args.keys():
+        if args["path_id"] in api_data["files"].keys():
+            file_path = api_data["files"][args["path_id"]]
+            print(file_path)
+            with open(file_path, "rb") as file_file:
+                print(type(file_file))
+                return file_file.read()
+        else:
+            return {"message": "not found"}
+    return {"message": "not found - end"}
+
+@api.get("/files/<id>")
+def get_single_file(args):
     print(api_data)
     if "path_id" in args.keys():
         if args["path_id"] in api_data["files"].keys():
