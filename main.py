@@ -149,31 +149,30 @@ if __name__ == "__main__":
             parsed_url = urlparse(self.path)
             path = parsed_url.path
             args = parse_qs(parsed_url.query)
-            if not path in api.routing["GET"]:
+            if path in api.routing["GET"]: 
+                self.call_api("GET", path, args)
+                return
+            else:
                 new_path, path_id = path.rsplit("/",1)
-                print(new_path, " ", path_id)
-                if new_path == "": new_path = "/"
-                if new_path in api.routing["GET"]: 
-                    path = new_path
-                    args["path_id"] = path_id
-            for k in args.keys():
-                if len(args[k]) == 1:
-                    args[k] = args[k][0]            
-            self.call_api("GET", path, args)
+                if new_path+"/<id>" in api.routing["GET"]:
+                    args["/<id>"] = path_id
+                    self.call_api("GET", new_path+"/<id>", args, path_id)
+                    return
+            self.return_404()
 
         def do_POST(self):
             parsed_url = urlparse(self.path)
             path = parsed_url.path
             if self.headers.get("content-type") != "application/json":
-                self.send_response(400)
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "error": "posted data must be in json format"
-                }, indent=4).encode())
+                self.return_400()
+                return
             else:
                 data_len = int(self.headers.get("content-length"))
                 data = self.rfile.read(data_len).decode()
-                self.call_api("POST", path, json.loads(data))
+                if path in api.routing["POST"]:
+                    self.call_api("POST", path, json.loads(data))
+                    return
+            self.return_404()
         
         def do_PUT(self):
             parsed_url = urlparse(self.path)
